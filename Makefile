@@ -16,3 +16,6 @@ test.cover:
 cov:
 	go test -cover -coverprofile=cover.out
 	go tool cover -html=cover.out -o cover.html
+
+build:
+	go build -o $(BINDIR)/named ./internal/example/cmd/named

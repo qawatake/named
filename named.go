@@ -97,7 +97,7 @@ func innerMostFunc(stack []ast.Node) *ast.FuncType {
 func objectOf(pass *analysis.Pass, d Deferred) types.Object {
 	// function
 	if !strings.Contains(d.FuncName, ".") {
-		return analysisutil.ObjectOf(pass, d.PkgPath, d.FuncName)
+		return analysisutil_ObjectOf(pass, d.PkgPath, d.FuncName)
 	}
 	tt := strings.Split(d.FuncName, ".")
 	if len(tt) != 2 {
@@ -134,4 +134,18 @@ func isNamedReturnValue(pass *analysis.Pass, arg ast.Expr, fields *ast.FieldList
 		}
 	}
 	return false
+}
+
+// copied and modified from https://github.com/gostaticanalysis/analysisutil/blob/ccfdecf515f47e636ba164ce0e5f26810eaf8747/types.go#L18
+// ObjectOf returns types.Object by given name in the package.
+func analysisutil_ObjectOf(pass *analysis.Pass, pkg, name string) types.Object {
+	obj := analysisutil.LookupFromImports(pass.Pkg.Imports(), pkg, name)
+	if obj != nil {
+		return obj
+	}
+	if analysisutil.RemoveVendor(pass.Pkg.Path()) != analysisutil.RemoveVendor(pkg) {
+		fmt.Println(pass.Pkg.Name(), pkg)
+		return nil
+	}
+	return pass.Pkg.Scope().Lookup(name)
 }
