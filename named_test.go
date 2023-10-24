@@ -33,4 +33,12 @@ func TestAnalyzer(t *testing.T) {
 			ArgPos:   0,
 		},
 	), "a/...")
+
+	analysistest.Run(t, testdata, named.NewAnalyzer(
+		named.Deferred{
+			PkgPath:  "github.com/qawatake/a",
+			FuncName: "Wrap",
+			ArgPos:   0,
+		},
+	), "github.com/qawatake/a/...")
 }
