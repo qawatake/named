@@ -1,9 +1,11 @@
 package named
 
 import (
+	"fmt"
 	"go/ast"
 	"go/token"
 	"go/types"
+	"strings"
 
 	"github.com/gostaticanalysis/analysisutil"
 	"golang.org/x/tools/go/analysis"
@@ -43,7 +45,7 @@ func (r *runner) run(pass *analysis.Pass) (any, error) {
 
 	m := make(map[types.Object]Deferred)
 	for _, d := range r.deferred {
-		obj := analysisutil.ObjectOf(pass, d.PkgPath, d.FuncName)
+		obj := objectOf(pass, d)
 		if obj == nil {
 			continue
 		}
@@ -95,6 +97,22 @@ func (r *runner) run(pass *analysis.Pass) (any, error) {
 	})
 
 	return nil, nil
+}
+
+func objectOf(pass *analysis.Pass, d Deferred) types.Object {
+	// function
+	if !strings.Contains(d.FuncName, ".") {
+		return analysisutil.ObjectOf(pass, d.PkgPath, d.FuncName)
+	}
+	tt := strings.Split(d.FuncName, ".")
+	if len(tt) != 2 {
+		panic(fmt.Errorf("invalid FuncName %s", d.FuncName))
+	}
+	// method
+	recv := tt[0]
+	method := tt[1]
+	recvType := analysisutil.TypeOf(pass, d.PkgPath, recv)
+	return analysisutil.MethodOf(recvType, method)
 }
 
 func isNamedReturnValue(pass *analysis.Pass, arg ast.Expr, fields *ast.FieldList) bool {

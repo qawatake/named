@@ -27,5 +27,10 @@ func TestAnalyzer(t *testing.T) {
 			FuncName: "WrapAny",
 			ArgPos:   0,
 		},
+		named.Deferred{
+			PkgPath:  "a",
+			FuncName: "wrapper.Wrap",
+			ArgPos:   0,
+		},
 	), "a/...")
 }

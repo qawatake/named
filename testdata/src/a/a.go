@@ -94,8 +94,24 @@ func f7() (err error) {
 	return
 }
 
-// todo method
+// method
+func f9() (err error) {
+	var w wrapper
+	defer w.Wrap(&err, "x") // ok
+	return nil
+}
+
+func f10() (err error) {
+	var w wrapper
+	var e error
+	defer w.Wrap(&e, "x") // want "named"
+	return nil
+}
 
 func Wrap(errp *error, msg string) {}
 
 func WrapAny(v any) {}
+
+type wrapper struct{}
+
+func (w wrapper) Wrap(errp *error, msg string) {}
