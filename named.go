@@ -14,7 +14,7 @@ import (
 )
 
 const name = "named"
-const doc = "named is ..."
+const doc = "named ensures a target function to be called with a named return value."
 
 func NewAnalyzer(deferred ...Deferred) *analysis.Analyzer {
 	r := runner{

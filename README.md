@@ -15,7 +15,7 @@ func Bad() error {
 }
 
 func Wrap(errp *error, msg string) {
-  if errp == nil || *errp == nil {
+  if *errp == nil {
     return
   }
   *errp = fmt.Errorf("%s: %w", msg, *errp)
