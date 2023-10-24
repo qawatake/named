@@ -52,5 +52,3 @@ Then, run `go vet` with your `named` binary.
 ```sh
 go vet -vettool=/path/to/your/named ./...
 ```
-
-**analysisutilのObjectOfをカスタマイズしよう**
