@@ -25,7 +25,7 @@ func g() error {
 }
 
 func h() {
-	defer Wrap(nil, "x")
+	defer Wrap(nil, "x") // want "named"
 }
 
 func f2() (err error) {
@@ -48,7 +48,7 @@ func g2() error {
 }
 
 func h2() {
-	defer b.Wrap(nil, "x")
+	defer b.Wrap(nil, "x") // want "named"
 }
 
 func f3() (err error) {
@@ -62,6 +62,39 @@ func f4() error {
 	defer WrapAny(&*x) // want "named"
 	return nil
 }
+
+func f5() {
+	func() (err error) {
+		defer Wrap(&err, "x") // ok
+		return
+	}()
+}
+
+func f6() (err error) {
+	func() {
+		defer Wrap(&err, "x") // want "named"
+		return
+	}()
+	return
+}
+
+func f8() (err error) {
+	func() (err error) {
+		defer Wrap(&err, "x") // ok
+		return
+	}()
+	return
+}
+
+func f7() (err error) {
+	func() {
+		defer b.Wrap(&err, "x") // want "named"
+		return
+	}()
+	return
+}
+
+// todo method
 
 func Wrap(errp *error, msg string) {}
 
