@@ -2,16 +2,20 @@
 
 Linter `named` ensures a target function to be called with a named return value.
 
+A typical use case is to prevent the misuse of a error wrapping function such as [derrors.Wrap](https://github.com/golang/pkgsite/blob/5f0513d53cff8382238b5f8c78e8317d2b4ad06d/internal/derrors/derrors.go#L240), which does not allow the resulted error to be unwrapped.
+The following function `Bad` fails to wrap the error simply because it doesn't use the named return value as an argument.
+
 ```go
 func Good() (err error) {
-  defer Wrap(&err, "x") // ok because a named return value is passed.
-  return nil
+  err = DoSomething()
+  defer Wrap(&err, "wrapped!!") // ok because a named return value is passed.
+  return fmt.Errorf("error from Good: %w", err)
 }
 
 func Bad() error {
-  err := fmt.Errorf("x")
-  defer Wrap(&err, "x") // <- err is not a named return value.
-  return err
+  err := DoSomething()
+  defer Wrap(&err, "wrapped!!") // <- err is not a named return value.
+  return fmt.Errorf("error from Bad: %w", err)
 }
 
 func Wrap(errp *error, msg string) {
@@ -19,6 +23,20 @@ func Wrap(errp *error, msg string) {
     return
   }
   *errp = fmt.Errorf("%s: %w", msg, *errp)
+}
+
+func DoSomething() error {
+  return errors.New("original error")
+}
+
+func main() {
+  err := Good()
+  fmt.Println(err)
+  err = Bad()
+  fmt.Println(err)
+  // Output:
+  // wrapped!!: error from Good: original error
+  // error from Bad: original error
 }
 ```
 

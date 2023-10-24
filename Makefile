@@ -19,3 +19,6 @@ cov:
 
 build:
 	go build -o $(BINDIR)/named ./internal/example/cmd/named
+
+test.vet:
+	go vet -vettool=$(BINDIR)/named ./internal/...

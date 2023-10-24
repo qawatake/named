@@ -10,10 +10,16 @@ func Wrap_NamedReturnValue() (err error) {
 	return nil
 }
 
-func Wrap_LocalVariableNotNamedReturnValue() error {
+func Wrap_LocalVariableDeclared() error {
 	var err error
 	defer Wrap(&err, "x") // want "named"
 	return nil
+}
+
+func Wrap_LocalVariableAssign() error {
+	err := DoSomething()
+	defer Wrap(&err, "x") // want "named"
+	return err
 }
 
 func Wrap_NillLiteral() (err error) {
@@ -26,7 +32,7 @@ func B_Wrap_MethodNamedReturnValue() (err error) {
 	return nil
 }
 
-func B_Wrap_MethodLocalVariableNotNamedReturnValue() error {
+func B_Wrap_MethodLocalVariableDeclared() error {
 	var err error
 	defer b.Wrap(&err, "x") // want "named"
 	return nil
@@ -90,7 +96,7 @@ func Wrapper_Wrap_NamedReturnValue() (err error) {
 	return nil
 }
 
-func Wrapper_Wrap_LocalVariableNotReturnValue() {
+func Wrapper_Wrap_LocalVariableDeclared() {
 	var w wrapper
 	var err error
 	defer w.Wrap(&err, "x") // want "named"
@@ -111,3 +117,7 @@ func WrapAny(v any) {}
 type wrapper struct{}
 
 func (w wrapper) Wrap(errp *error, msg string) {}
+
+func DoSomething() error {
+	return errors.New("error from DoSomething")
+}
