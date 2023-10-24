@@ -3,75 +3,64 @@ package a
 import (
 	"a/b"
 	"errors"
-	"fmt"
 )
 
-func f() (err error) {
-	defer Wrap(&err, "x")
-	fmt.Println("x")
+func Wrap_NamedReturnValue() (err error) {
+	defer Wrap(&err, "x") // ok
 	return nil
 }
 
-func g() error {
+func Wrap_LocalVariableNotNamedReturnValue() error {
 	var err error
 	defer Wrap(&err, "x") // want "named"
-	defer Wrap(nil, "x")  // want "named"
-	defer Wrap(           // want "named"
-		func() *error {
-			var err error
-			return &err
-		}(),
-		"x")
 	return nil
 }
 
-func h() {
+func Wrap_NillLiteral() (err error) {
 	defer Wrap(nil, "x") // want "named"
-}
-
-func f2() (err error) {
-	defer b.Wrap(&err, "x")
-	fmt.Println("x")
 	return nil
 }
 
-func g2() error {
+func B_Wrap_MethodNamedReturnValue() (err error) {
+	defer b.Wrap(&err, "x") // ok
+	return nil
+}
+
+func B_Wrap_MethodLocalVariableNotNamedReturnValue() error {
 	var err error
 	defer b.Wrap(&err, "x") // want "named"
-	defer b.Wrap(nil, "x")  // want "named"
-	defer b.Wrap(           // want "named"
-		func() *error {
-			var err error
-			return &err
-		}(),
-		"x")
 	return nil
 }
 
-func h2() {
+func B_Wrap_MethodNilLiteral() (err error) {
 	defer b.Wrap(nil, "x") // want "named"
-}
-
-func f3() (err error) {
-	defer WrapAny(&err)
 	return nil
 }
 
-func f4() error {
+func WrapAny_NamedReturnValue() (err error) {
+	defer WrapAny(&err) // ok
+	return nil
+}
+
+func WrapAny_UnaryNonPointer() (err error) {
+	defer WrapAny(+1) // want "named"
+	return nil
+}
+
+func WrapAny_UnaryPointerStar() (err error) {
 	var x *int
-	defer WrapAny(+1)  // want "named"
 	defer WrapAny(&*x) // want "named"
 	return nil
 }
 
-func f5() {
+func Wrap_Anonymous() {
 	func() (err error) {
 		defer Wrap(&err, "x") // ok
 		return
 	}()
 }
 
-func f6() (err error) {
+func Wrap_NotInnerMost() (err error) {
 	func() {
 		defer Wrap(&err, "x") // want "named"
 		return
@@ -79,7 +68,7 @@ func f6() (err error) {
 	return
 }
 
-func f8() (err error) {
+func Wrap_AnonymousDoubleNamedReturnValues() (err error) {
 	func() (err error) {
 		defer Wrap(&err, "x") // ok
 		return
@@ -87,7 +76,7 @@ func f8() (err error) {
 	return
 }
 
-func f7() (err error) {
+func B_Wrap_NotInnerMost() (err error) {
 	func() {
 		defer b.Wrap(&err, "x") // want "named"
 		return
@@ -95,21 +84,19 @@ func f7() (err error) {
 	return
 }
 
-// method
-func f9() (err error) {
+func Wrapper_Wrap_NamedReturnValue() (err error) {
 	var w wrapper
 	defer w.Wrap(&err, "x") // ok
 	return nil
 }
 
-func f10() (err error) {
+func Wrapper_Wrap_LocalVariableNotReturnValue() {
 	var w wrapper
-	var e error
-	defer w.Wrap(&e, "x") // want "named"
-	return nil
+	var err error
+	defer w.Wrap(&err, "x") // want "named"
 }
 
-func f11() (err error) {
+func Wrap_LocalVariableWithTheSameNameInFor() (err error) {
 	for i := 0; i < 10; i++ {
 		err := errors.New("x")
 		defer Wrap(&err, "x") // want "named"
