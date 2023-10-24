@@ -12,7 +12,7 @@ test.cover:
 	go mod tidy
 	go test -race -shuffle=on -coverprofile=coverage.txt -covermode=atomic ./...
 
-# local用
+# For local environment
 cov:
 	go test -cover -coverprofile=cover.out
 	go tool cover -html=cover.out -o cover.html

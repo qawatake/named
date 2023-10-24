@@ -7,7 +7,7 @@ import (
 	"go/types"
 	"strings"
 
-	"github.com/gostaticanalysis/analysisutil"
+	"github.com/qawatake/named/internal/analysisutil"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 	"golang.org/x/tools/go/ast/inspector"
@@ -97,7 +97,7 @@ func innerMostFunc(stack []ast.Node) *ast.FuncType {
 func objectOf(pass *analysis.Pass, d Deferred) types.Object {
 	// function
 	if !strings.Contains(d.FuncName, ".") {
-		return analysisutil_ObjectOf(pass, d.PkgPath, d.FuncName)
+		return analysisutil.ObjectOf(pass, d.PkgPath, d.FuncName)
 	}
 	tt := strings.Split(d.FuncName, ".")
 	if len(tt) != 2 {
@@ -106,7 +106,7 @@ func objectOf(pass *analysis.Pass, d Deferred) types.Object {
 	// method
 	recv := tt[0]
 	method := tt[1]
-	recvType := analysisutil_TypeOf(pass, d.PkgPath, recv)
+	recvType := analysisutil.TypeOf(pass, d.PkgPath, recv)
 	return analysisutil.MethodOf(recvType, method)
 }
 
@@ -134,41 +134,4 @@ func isNamedReturnValue(pass *analysis.Pass, arg ast.Expr, fields *ast.FieldList
 		}
 	}
 	return false
-}
-
-// copied and modified from https://github.com/gostaticanalysis/analysisutil/blob/ccfdecf515f47e636ba164ce0e5f26810eaf8747/types.go#L18
-// ObjectOf returns types.Object by given name in the package.
-func analysisutil_ObjectOf(pass *analysis.Pass, pkg, name string) types.Object {
-	obj := analysisutil.LookupFromImports(pass.Pkg.Imports(), pkg, name)
-	if obj != nil {
-		return obj
-	}
-	if analysisutil.RemoveVendor(pass.Pkg.Path()) != analysisutil.RemoveVendor(pkg) {
-		return nil
-	}
-	return pass.Pkg.Scope().Lookup(name)
-}
-
-// copied and modified from https://github.com/gostaticanalysis/analysisutil/blob/ccfdecf515f47e636ba164ce0e5f26810eaf8747/types.go#L31
-// TypeOf returns types.Type by given name in the package.
-// TypeOf accepts pointer types such as *T.
-func analysisutil_TypeOf(pass *analysis.Pass, pkg, name string) types.Type {
-	if name == "" {
-		return nil
-	}
-
-	if name[0] == '*' {
-		obj := analysisutil_TypeOf(pass, pkg, name[1:])
-		if obj == nil {
-			return nil
-		}
-		return types.NewPointer(obj)
-	}
-
-	obj := analysisutil_ObjectOf(pass, pkg, name)
-	if obj == nil {
-		return nil
-	}
-
-	return obj.Type()
 }
