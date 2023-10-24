@@ -57,38 +57,20 @@ func (r *runner) run(pass *analysis.Pass) (any, error) {
 			switch f := stmt.Call.Fun.(type) {
 			case *ast.Ident:
 				if d, ok := m[pass.TypesInfo.ObjectOf(f)]; ok {
-					for i := len(stack) - 1; i >= 0; i-- {
-						n := stack[i]
-						switch n := n.(type) {
-						case *ast.FuncDecl:
-							if !isNamedReturnValue(pass, stmt.Call.Args[d.ArgPos], n.Type.Results) {
-								pass.Reportf(stmt.Call.Fun.Pos(), "%s should be called with a named return value as the %dth argument", d.FuncName, d.ArgPos+1)
-							}
-							return false
-						case *ast.FuncLit:
-							if !isNamedReturnValue(pass, stmt.Call.Args[d.ArgPos], n.Type.Results) {
-								pass.Reportf(stmt.Call.Fun.Pos(), "%s should be called with a named return value as the %dth argument", d.FuncName, d.ArgPos+1)
-							}
-							return false
+					if f := innerMostFunc(stack); f != nil {
+						if !isNamedReturnValue(pass, stmt.Call.Args[d.ArgPos], f.Results) {
+							pass.Reportf(stmt.Call.Fun.Pos(), "%s should be called with a named return value as the %dth argument", d.FuncName, d.ArgPos+1)
 						}
+						return false
 					}
 				}
 			case *ast.SelectorExpr:
 				if d, ok := m[pass.TypesInfo.ObjectOf(f.Sel)]; ok {
-					for i := len(stack) - 1; i >= 0; i-- {
-						n := stack[i]
-						switch n := n.(type) {
-						case *ast.FuncDecl:
-							if !isNamedReturnValue(pass, stmt.Call.Args[d.ArgPos], n.Type.Results) {
-								pass.Reportf(stmt.Call.Fun.Pos(), "%s should be called with a named return value as the %dth argument", d.FuncName, d.ArgPos+1)
-							}
-							return false
-						case *ast.FuncLit:
-							if !isNamedReturnValue(pass, stmt.Call.Args[d.ArgPos], n.Type.Results) {
-								pass.Reportf(stmt.Call.Fun.Pos(), "%s should be called with a named return value as the %dth argument", d.FuncName, d.ArgPos+1)
-							}
-							return false
+					if f := innerMostFunc(stack); f != nil {
+						if !isNamedReturnValue(pass, stmt.Call.Args[d.ArgPos], f.Results) {
+							pass.Reportf(stmt.Call.Fun.Pos(), "%s should be called with a named return value as the %dth argument", d.FuncName, d.ArgPos+1)
 						}
+						return false
 					}
 				}
 			}
@@ -97,6 +79,19 @@ func (r *runner) run(pass *analysis.Pass) (any, error) {
 	})
 
 	return nil, nil
+}
+
+func innerMostFunc(stack []ast.Node) *ast.FuncType {
+	for i := len(stack) - 1; i >= 0; i-- {
+		n := stack[i]
+		switch n := n.(type) {
+		case *ast.FuncDecl:
+			return n.Type
+		case *ast.FuncLit:
+			return n.Type
+		}
+	}
+	return nil
 }
 
 func objectOf(pass *analysis.Pass, d Deferred) types.Object {
