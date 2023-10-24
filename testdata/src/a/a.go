@@ -2,6 +2,7 @@ package a
 
 import (
 	"a/b"
+	"errors"
 	"fmt"
 )
 
@@ -106,6 +107,14 @@ func f10() (err error) {
 	var e error
 	defer w.Wrap(&e, "x") // want "named"
 	return nil
+}
+
+func f11() (err error) {
+	for i := 0; i < 10; i++ {
+		err := errors.New("x")
+		defer Wrap(&err, "x") // want "named"
+	}
+	return
 }
 
 func Wrap(errp *error, msg string) {}
