@@ -34,10 +34,16 @@ func TestAnalyzer(t *testing.T) {
 		},
 	), "a/...")
 
+	// Cases where a module path and a package name are different.
 	analysistest.Run(t, testdata, named.NewAnalyzer(
 		named.Deferred{
 			PkgPath:  "github.com/qawatake/a",
 			FuncName: "Wrap",
+			ArgPos:   0,
+		},
+		named.Deferred{
+			PkgPath:  "github.com/qawatake/a",
+			FuncName: "wrapper.Wrap",
 			ArgPos:   0,
 		},
 	), "github.com/qawatake/a/...")

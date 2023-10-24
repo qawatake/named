@@ -1,4 +1,3 @@
-// Package for cases where a module path and a package name are different.
 package a
 
 func Wrap_NamedReturnValue() (err error) {

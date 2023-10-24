@@ -97,7 +97,7 @@ func innerMostFunc(stack []ast.Node) *ast.FuncType {
 func objectOf(pass *analysis.Pass, d Deferred) types.Object {
 	// function
 	if !strings.Contains(d.FuncName, ".") {
-		return analysisutil.ObjectOf(pass, d.PkgPath, d.FuncName)
+		return analysisutil_ObjectOf(pass, d.PkgPath, d.FuncName)
 	}
 	tt := strings.Split(d.FuncName, ".")
 	if len(tt) != 2 {
@@ -106,7 +106,7 @@ func objectOf(pass *analysis.Pass, d Deferred) types.Object {
 	// method
 	recv := tt[0]
 	method := tt[1]
-	recvType := analysisutil.TypeOf(pass, d.PkgPath, recv)
+	recvType := analysisutil_TypeOf(pass, d.PkgPath, recv)
 	return analysisutil.MethodOf(recvType, method)
 }
 
