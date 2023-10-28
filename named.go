@@ -34,10 +34,15 @@ type runner struct {
 	deferred []Deferred
 }
 
+// Target represents a function or a method to be checked by named.
 type Deferred struct {
-	PkgPath  string
+	// Package path of the function or method.
+	PkgPath string
+	// Name of the function or method.
 	FuncName string
-	ArgPos   int
+	// Position of an argument which should be a named return value.
+	// ArgPos is 0-indexed.
+	ArgPos int
 }
 
 func (r *runner) run(pass *analysis.Pass) (any, error) {
