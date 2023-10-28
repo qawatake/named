@@ -1,5 +1,9 @@
 # named
 
+[![Go Reference](https://pkg.go.dev/badge/github.com/qawatake/named.svg)](https://pkg.go.dev/github.com/qawatake/named)
+[![test](https://github.com/qawatake/named/actions/workflows/test.yaml/badge.svg)](https://github.com/qawatake/named/actions/workflows/test.yaml)
+[![codecov](https://codecov.io/gh/qawatake/named/graph/badge.svg?token=0XZh5C4Gq8)](https://codecov.io/gh/qawatake/named)
+
 Linter `named` ensures a target function to be called with a named return value.
 
 A typical use case is to prevent the misuse of a error wrapping function such as [derrors.Wrap](https://github.com/golang/pkgsite/blob/5f0513d53cff8382238b5f8c78e8317d2b4ad06d/internal/derrors/derrors.go#L240), which does not allow the resulted error to be unwrapped.
