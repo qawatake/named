@@ -3,7 +3,7 @@
 Linter `named` ensures a target function to be called with a named return value.
 
 A typical use case is to prevent the misuse of a error wrapping function such as [derrors.Wrap](https://github.com/golang/pkgsite/blob/5f0513d53cff8382238b5f8c78e8317d2b4ad06d/internal/derrors/derrors.go#L240), which does not allow the resulted error to be unwrapped.
-The following function `Bad` fails to wrap the error simply because it doesn't use the named return value as an argument.
+Function `Bad` below fails to wrap the error simply because it doesn't use the named return value as an argument.
 
 ```go
 func Good() (err error) {
