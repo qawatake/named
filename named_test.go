@@ -34,7 +34,10 @@ func TestAnalyzer(t *testing.T) {
 		},
 	), "a/...")
 
-	// Cases where a module path and a package name are different.
+}
+
+func TestAnalyzer_pkgname_is_different_from_pkgpath(t *testing.T) {
+	testdata := testutil.WithModules(t, analysistest.TestData(), nil)
 	analysistest.Run(t, testdata, named.NewAnalyzer(
 		named.Deferred{
 			PkgPath:  "github.com/qawatake/a",
