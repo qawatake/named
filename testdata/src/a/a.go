@@ -22,6 +22,17 @@ func Wrap_LocalVariableAssign() error {
 	return err
 }
 
+func Wrap_FieldOfNamedReturnValue() (s S) {
+	defer Wrap(&s.Field, "x") // ok
+	return
+}
+
+func Wrap_FieldOfLocalVariable() S {
+	var s S
+	defer Wrap(&s.Field, "x") // want "named"
+	return s
+}
+
 func Wrap_NillLiteral() (err error) {
 	defer Wrap(nil, "x") // want "named"
 	return nil
@@ -120,4 +131,8 @@ func (w wrapper) Wrap(errp *error, msg string) {}
 
 func DoSomething() error {
 	return errors.New("error from DoSomething")
+}
+
+type S struct {
+	Field error
 }
