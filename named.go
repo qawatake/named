@@ -14,7 +14,8 @@ import (
 )
 
 const name = "named"
-const doc = "named ensures a target function to be called with a named return value."
+const doc = "named ensures a target function to be called with a named return value"
+const url = "https://pkg.go.dev/github.com/qawatake/named"
 
 func NewAnalyzer(deferred ...Deferred) *analysis.Analyzer {
 	r := runner{
@@ -23,6 +24,7 @@ func NewAnalyzer(deferred ...Deferred) *analysis.Analyzer {
 	return &analysis.Analyzer{
 		Name: name,
 		Doc:  doc,
+		URL:  url,
 		Run:  r.run,
 		Requires: []*analysis.Analyzer{
 			inspect.Analyzer,
