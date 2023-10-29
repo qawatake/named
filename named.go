@@ -125,8 +125,8 @@ func isNamedReturnValue(pass *analysis.Pass, arg ast.Expr, fields *ast.FieldList
 	if unary.Op != token.AND {
 		return false
 	}
-	v, ok := unary.X.(*ast.Ident)
-	if !ok {
+	v := findRoot(unary.X)
+	if v == nil {
 		return false
 	}
 	if fields == nil {
@@ -141,4 +141,16 @@ func isNamedReturnValue(pass *analysis.Pass, arg ast.Expr, fields *ast.FieldList
 		}
 	}
 	return false
+}
+
+// x.Field1.Field2.Field3 -> x
+func findRoot(x ast.Expr) *ast.Ident {
+	switch x := x.(type) {
+	case *ast.Ident:
+		return x
+	case *ast.SelectorExpr:
+		return findRoot(x.X)
+	default:
+		return nil
+	}
 }
