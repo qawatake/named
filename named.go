@@ -52,7 +52,10 @@ func (r *runner) run(pass *analysis.Pass) (any, error) {
 
 	m := make(map[types.Object]Deferred)
 	for _, d := range r.deferred {
-		obj := objectOf(pass, d)
+		obj, err := funcObjectOf(pass, d)
+		if err != nil {
+			return nil, err
+		}
 		if obj == nil {
 			continue
 		}
@@ -101,20 +104,37 @@ func innerMostFunc(stack []ast.Node) *ast.FuncType {
 	return nil
 }
 
-func objectOf(pass *analysis.Pass, d Deferred) types.Object {
+func funcObjectOf(pass *analysis.Pass, d Deferred) (*types.Func, error) {
 	// function
 	if !strings.Contains(d.FuncName, ".") {
-		return analysisutil.ObjectOf(pass, d.PkgPath, d.FuncName)
+		obj := analysisutil.ObjectOf(pass, d.PkgPath, d.FuncName)
+		if obj == nil {
+			// not found is ok because func need not to be called.
+			return nil, nil
+		}
+		ft, ok := obj.(*types.Func)
+		if !ok {
+			return nil, newErrNotFunc(d.PkgPath, d.FuncName)
+		}
+		return ft, nil
 	}
 	tt := strings.Split(d.FuncName, ".")
 	if len(tt) != 2 {
-		panic(fmt.Errorf("invalid FuncName %s", d.FuncName))
+		return nil, newErrInvalidFuncName(d.FuncName)
 	}
 	// method
 	recv := tt[0]
 	method := tt[1]
 	recvType := analysisutil.TypeOf(pass, d.PkgPath, recv)
-	return analysisutil.MethodOf(recvType, method)
+	if recvType == nil {
+		// not found is ok because method need not to be called.
+		return nil, nil
+	}
+	m := analysisutil.MethodOf(recvType, method)
+	if m == nil {
+		return nil, newErrNotMethod(d.PkgPath, recv, method)
+	}
+	return m, nil
 }
 
 func isNamedReturnValue(pass *analysis.Pass, arg ast.Expr, fields *ast.FieldList) bool {
@@ -153,4 +173,52 @@ func findRoot(x ast.Expr) *ast.Ident {
 	default:
 		return nil
 	}
+}
+
+type errInvalidFuncName struct {
+	FuncName string
+}
+
+func newErrInvalidFuncName(funcName string) errInvalidFuncName {
+	return errInvalidFuncName{
+		FuncName: funcName,
+	}
+}
+
+func (e errInvalidFuncName) Error() string {
+	return fmt.Sprintf("invalid FuncName %s", e.FuncName)
+}
+
+type errNotFunc struct {
+	PkgPath  string
+	FuncName string
+}
+
+func newErrNotFunc(pkgPath, funcName string) errNotFunc {
+	return errNotFunc{
+		PkgPath:  pkgPath,
+		FuncName: funcName,
+	}
+}
+
+func (e errNotFunc) Error() string {
+	return fmt.Sprintf("%s.%s is not a function.", e.PkgPath, e.FuncName)
+}
+
+type errNotMethod struct {
+	PkgPath    string
+	Recv       string
+	MethodName string
+}
+
+func newErrNotMethod(pkgPath, recv, methodName string) errNotMethod {
+	return errNotMethod{
+		PkgPath:    pkgPath,
+		Recv:       recv,
+		MethodName: methodName,
+	}
+}
+
+func (e errNotMethod) Error() string {
+	return fmt.Sprintf("%s.%s.%s is not a method.", e.PkgPath, e.MethodName, e.Recv)
 }

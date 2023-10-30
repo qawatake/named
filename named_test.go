@@ -1,6 +1,9 @@
 package named_test
 
 import (
+	"errors"
+	"fmt"
+	"sync"
 	"testing"
 
 	"github.com/gostaticanalysis/testutil"
@@ -8,8 +11,8 @@ import (
 	"golang.org/x/tools/go/analysis/analysistest"
 )
 
-// TestAnalyzer is a test for Analyzer.
 func TestAnalyzer(t *testing.T) {
+	t.Parallel()
 	testdata := testutil.WithModules(t, analysistest.TestData(), nil)
 	analysistest.Run(t, testdata, named.NewAnalyzer(
 		named.Deferred{
@@ -34,7 +37,11 @@ func TestAnalyzer(t *testing.T) {
 		},
 	), "a/...")
 
-	// Cases where a module path and a package name are different.
+}
+
+func TestAnalyzer_pkgname_is_different_from_pkgpath(t *testing.T) {
+	t.Parallel()
+	testdata := testutil.WithModules(t, analysistest.TestData(), nil)
 	analysistest.Run(t, testdata, named.NewAnalyzer(
 		named.Deferred{
 			PkgPath:  "github.com/qawatake/a",
@@ -47,4 +54,107 @@ func TestAnalyzer(t *testing.T) {
 			ArgPos:   0,
 		},
 	), "github.com/qawatake/a/...")
+}
+
+func TestAnalyzer_invalid_func_name(t *testing.T) {
+	t.Parallel()
+	testdata := testutil.WithModules(t, analysistest.TestData(), nil)
+	treporter := NewAnalysisErrorReporter(1)
+	analysistest.Run(treporter, testdata, named.NewAnalyzer(
+		named.Deferred{
+			PkgPath:  "a",
+			FuncName: ".wrapper.Wrap",
+			ArgPos:   0,
+		},
+	), "a")
+	errs := treporter.Errors()
+	want := named.ErrInvalidFuncName{
+		FuncName: ".wrapper.Wrap",
+	}
+	if len(errs) != 1 {
+		t.Fatalf("err expected but not found: %v", want)
+	}
+	if !errors.Is(errs[0], want) {
+		t.Errorf("got %v, want %v", errs[0], want)
+	}
+}
+
+func TestAnalyzer_notfunc(t *testing.T) {
+	t.Parallel()
+	testdata := testutil.WithModules(t, analysistest.TestData(), nil)
+	treporter := NewAnalysisErrorReporter(1)
+	analysistest.Run(treporter, testdata, named.NewAnalyzer(
+		named.Deferred{
+			PkgPath:  "a",
+			FuncName: "S",
+		},
+	), "a")
+	errs := treporter.Errors()
+	want := named.ErrNotFunc{
+		PkgPath:  "a",
+		FuncName: "S",
+	}
+	if len(errs) != 1 {
+		t.Fatalf("err expected but not found: %v", want)
+	}
+	if !errors.Is(errs[0], want) {
+		t.Errorf("got %v, want %v", errs[0], want)
+	}
+}
+
+func TestAnalyzer_notmethod(t *testing.T) {
+	t.Parallel()
+	testdata := testutil.WithModules(t, analysistest.TestData(), nil)
+	treporter := NewAnalysisErrorReporter(1)
+	analysistest.Run(treporter, testdata, named.NewAnalyzer(
+		named.Deferred{
+			PkgPath:  "a",
+			FuncName: "S.Field",
+			ArgPos:   0,
+		},
+	), "a")
+	errs := treporter.Errors()
+	want := named.ErrNotMethod{
+		PkgPath:    "a",
+		Recv:       "S",
+		MethodName: "Field",
+	}
+	if len(errs) != 1 {
+		t.Fatalf("err expected but not found: %v", want)
+	}
+	if !errors.Is(errs[0], want) {
+		t.Errorf("got %v, want %v", errs[0], want)
+	}
+}
+
+var _ analysistest.Testing = (*analysisErrorReporter)(nil)
+
+type analysisErrorReporter struct {
+	sync.RWMutex
+	errs []error
+}
+
+func NewAnalysisErrorReporter(expected int) *analysisErrorReporter {
+	return &analysisErrorReporter{
+		errs: make([]error, 0, expected),
+	}
+}
+
+func (r *analysisErrorReporter) Errorf(format string, args ...any) {
+	errs := make([]error, 0, len(args))
+	for _, arg := range args {
+		if err, ok := arg.(error); ok {
+			errs = append(errs, err)
+		}
+	}
+	errs = append(errs, fmt.Errorf(format, args...))
+	r.Lock()
+	defer r.Unlock()
+	r.errs = append(r.errs, errors.Join(errs...))
+}
+
+func (r *analysisErrorReporter) Errors() []error {
+	r.RLock()
+	defer r.RUnlock()
+	return r.errs[:]
 }
