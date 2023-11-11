@@ -102,30 +102,30 @@ func TestAnalyzer_notfunc(t *testing.T) {
 	}
 }
 
-func TestAnalyzer_notmethod(t *testing.T) {
-	t.Parallel()
-	testdata := testutil.WithModules(t, analysistest.TestData(), nil)
-	treporter := NewAnalysisErrorReporter(1)
-	analysistest.Run(treporter, testdata, named.NewAnalyzer(
-		named.Deferred{
-			PkgPath:  "a",
-			FuncName: "S.Field",
-			ArgPos:   0,
-		},
-	), "a")
-	errs := treporter.Errors()
-	want := named.ErrNotMethod{
-		PkgPath:    "a",
-		Recv:       "S",
-		MethodName: "Field",
-	}
-	if len(errs) != 1 {
-		t.Fatalf("err expected but not found: %v", want)
-	}
-	if !errors.Is(errs[0], want) {
-		t.Errorf("got %v, want %v", errs[0], want)
-	}
-}
+// func TestAnalyzer_notmethod(t *testing.T) {
+// 	t.Parallel()
+// 	testdata := testutil.WithModules(t, analysistest.TestData(), nil)
+// 	treporter := NewAnalysisErrorReporter(1)
+// 	analysistest.Run(treporter, testdata, named.NewAnalyzer(
+// 		named.Deferred{
+// 			PkgPath:  "a",
+// 			FuncName: "S.Field",
+// 			ArgPos:   0,
+// 		},
+// 	), "a")
+// 	errs := treporter.Errors()
+// 	want := named.ErrNotMethod{
+// 		PkgPath:    "a",
+// 		Recv:       "S",
+// 		MethodName: "Field",
+// 	}
+// 	if len(errs) != 1 {
+// 		t.Fatalf("err expected but not found: %v", want)
+// 	}
+// 	if !errors.Is(errs[0], want) {
+// 		t.Errorf("got %v, want %v", errs[0], want)
+// 	}
+// }
 
 var _ analysistest.Testing = (*analysisErrorReporter)(nil)
 

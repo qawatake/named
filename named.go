@@ -1,6 +1,7 @@
 package named
 
 import (
+	"errors"
 	"fmt"
 	"go/ast"
 	"go/token"
@@ -54,10 +55,10 @@ func (r *runner) run(pass *analysis.Pass) (any, error) {
 	for _, d := range r.deferred {
 		obj, err := funcObjectOf(pass, d)
 		if err != nil {
+			if errors.Is(err, errFuncNotUsed) {
+				continue
+			}
 			return nil, err
-		}
-		if obj == nil {
-			continue
 		}
 		m[obj] = d
 	}
@@ -110,7 +111,7 @@ func funcObjectOf(pass *analysis.Pass, d Deferred) (*types.Func, error) {
 		obj := analysisutil.ObjectOf(pass, d.PkgPath, d.FuncName)
 		if obj == nil {
 			// not found is ok because func need not to be called.
-			return nil, nil
+			return nil, errFuncNotUsed
 		}
 		ft, ok := obj.(*types.Func)
 		if !ok {
@@ -127,12 +128,11 @@ func funcObjectOf(pass *analysis.Pass, d Deferred) (*types.Func, error) {
 	method := tt[1]
 	recvType := analysisutil.TypeOf(pass, d.PkgPath, recv)
 	if recvType == nil {
-		// not found is ok because method need not to be called.
-		return nil, nil
+		return nil, errFuncNotUsed
 	}
 	m := analysisutil.MethodOf(recvType, method)
 	if m == nil {
-		return nil, newErrNotMethod(d.PkgPath, recv, method)
+		return nil, errFuncNotUsed
 	}
 	return m, nil
 }
@@ -175,6 +175,8 @@ func findRoot(x ast.Expr) *ast.Ident {
 	}
 }
 
+var errFuncNotUsed = errors.New("function not used")
+
 type errInvalidFuncName struct {
 	FuncName string
 }
@@ -203,22 +205,4 @@ func newErrNotFunc(pkgPath, funcName string) errNotFunc {
 
 func (e errNotFunc) Error() string {
 	return fmt.Sprintf("%s.%s is not a function.", e.PkgPath, e.FuncName)
-}
-
-type errNotMethod struct {
-	PkgPath    string
-	Recv       string
-	MethodName string
-}
-
-func newErrNotMethod(pkgPath, recv, methodName string) errNotMethod {
-	return errNotMethod{
-		PkgPath:    pkgPath,
-		Recv:       recv,
-		MethodName: methodName,
-	}
-}
-
-func (e errNotMethod) Error() string {
-	return fmt.Sprintf("%s.%s.%s is not a method.", e.PkgPath, e.MethodName, e.Recv)
 }
